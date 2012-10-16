@@ -12,3 +12,6 @@ exports.watch = (root, filter, options, listener) ->
   monitor.on('change', listener) if listener
 
   return monitor
+
+
+exports.version = '0.1.0'
