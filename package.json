@@ -1,0 +1,33 @@
+{
+  "name": "fsmonitor",
+  "version": "0.1.0",
+  "description": "Fine-grained cross-platform file system monitoring for Node.js",
+  "main": "lib/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "debug": "~0.7.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.6.0",
+    "scopedfs": "~0.1.0"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha -R ${REPORTER-spec}"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andreyvit/fsmonitor.js.git"
+  },
+  "keywords": [
+    "fs",
+    "file",
+    "watch",
+    "watcher",
+    "monitor",
+    "change"
+  ],
+  "author": "Andrey Tarantsov <andrey@tarantsov.com>",
+  "license": "MIT"
+}
