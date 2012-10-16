@@ -57,10 +57,21 @@ class FSTree extends EventEmitter
     @_errors  = []
     await @_walk @root, '', defer()
 
+    @_updateRequested  = no
+    @_updateInProgress = no
+
     @emit 'complete'
 
 
   update: (folder, item) ->
+    @_updateRequested = yes
+    unless @_updateInProgress
+      @_performQueuedUpdate()
+    return
+
+  _performQueuedUpdate: ->
+    @_updateInProgress = yes
+
     oldFiles = {}
     for file in @_files
       oldFiles[file.relpath] = file
@@ -114,6 +125,10 @@ class FSTree extends EventEmitter
       change.removedFolders.push folder.relpath
 
     @emit 'change', change  unless change.isEmpty()
+
+    @_updateInProgress = no
+    if @_updateRequested
+      @_performQueuedUpdate()
 
 
 
