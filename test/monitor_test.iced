@@ -21,6 +21,7 @@ describe "FSMonitor", ->
       monitor.once 'complete', defer()
 
     deepEqual monitor.tree.allFiles, ['foo.txt', 'zoo/boo.txt']
+    monitor.close()
     done()
 
 
@@ -39,6 +40,7 @@ describe "FSMonitor", ->
       sfs.applySync(update)
 
     equal change.toString(), ("#{line}\n" for line in expectedChange).join('')
+    monitor.close()
     done()
 
 
