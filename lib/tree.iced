@@ -15,7 +15,7 @@ class FSFile
       (this.stats.mode == peer.stats.mode)
 
   toString: ->
-    @relpath
+    "FSFile(#{@relpath})"
 
 
 class FSChange
@@ -93,7 +93,7 @@ class FSTree extends EventEmitter
       if oldFiles.hasOwnProperty(relpath)
         old = oldFiles[relpath]
         delete oldFiles[relpath]
-        change.modifiedFiles.push(file) unless file.equals(old)
+        change.modifiedFiles.push(relpath) unless file.equals(old)
         unless file.equals(old)
           debug "Change in file #{relpath}:"
           debug "  .. size #{file.stats.size} != #{old.stats.size}" unless file.stats.size == old.stats.size
@@ -114,7 +114,7 @@ class FSTree extends EventEmitter
       if oldFolders.hasOwnProperty(relpath)
         old = oldFolders[relpath]
         delete oldFolders[relpath]
-        change.modifiedFolders.push(folder) unless folder.equals(old)
+        change.modifiedFolders.push(relpath) unless folder.equals(old)
         unless folder.equals(old)
           debug "Change in folder #{relpath}/:"
           debug "  .. mode #{folder.stats.mode} != #{old.stats.mode}" unless folder.stats.mode == old.stats.mode
