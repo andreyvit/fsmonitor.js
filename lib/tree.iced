@@ -60,6 +60,7 @@ class FSTree extends EventEmitter
     @_updateRequested  = no
     @_updateInProgress = no
 
+    debug "Finished building FSTree with #{@_files.length} files at #{@root}"
     @emit 'complete'
 
 
@@ -71,6 +72,8 @@ class FSTree extends EventEmitter
 
   _performQueuedUpdate: ->
     @_updateInProgress = yes
+    @_updateRequested  = no
+    debug "Updating FSTree at #{@root}"
 
     oldFiles = {}
     for file in @_files
