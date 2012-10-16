@@ -1,3 +1,4 @@
 *.js
+!bin/*.js
 node_modules
 /docs
