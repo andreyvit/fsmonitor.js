@@ -28,6 +28,9 @@ class FSChange
     @modifiedFolders = []
     @removedFolders  = []
 
+  isEmpty: ->
+    (@addedFiles.length + @modifiedFiles.length + @removedFiles.length + @addedFolders.length + @modifiedFolders.length + @removedFolders.length) == 0
+
   toString: ->
     [
       @_listToString '+', @addedFiles,    ''
@@ -110,7 +113,7 @@ class FSTree extends EventEmitter
     for own key, folder of oldFolders
       change.removedFolders.push folder.relpath
 
-    @emit 'change', change
+    @emit 'change', change  unless change.isEmpty()
 
 
 
