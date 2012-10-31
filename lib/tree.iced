@@ -4,6 +4,8 @@ Path  = require 'path'
 
 { EventEmitter } = require 'events'
 
+{ PlaPath } = require './pathutil'
+
 
 class FSFile
   constructor: (@relpath, @stats) ->
@@ -135,14 +137,43 @@ class FSTree extends EventEmitter
 
 
 
-  findMatchingPaths: (list) ->
-    (file.relpath for file in @_files when list.matches(file.relpath)).sort()
-
   Object.defineProperty @::, 'allFiles', get: ->
     (file.relpath for file in @_files).sort()
 
   Object.defineProperty @::, 'allFolders', get: ->
     (file.relpath for file in @_folders).sort()
+
+  findMatchingPaths: (list) ->
+    (file.relpath for file in @_files when list.matches(file.relpath)).sort()
+
+  findFilesBySuffix: (suffix, { bestSubtree }, callback) ->
+    suffix = PlaPath.normalize(suffix)
+
+    name = Path.basename(suffix)
+
+    bestScore = 0
+
+    allMatches =
+      for file in @_files
+        path = file.relpath
+        # debug "findFilesMatchingSuffixInSubtree considering: path = %j", path
+
+        continue unless Path.basename(path) is name
+        score = PlaPath.numberOfMatchingTrailingComponents(path, suffix)
+        score += 0.5 if bestSubtree && PlaPath.isSubpath(path, bestSubtree)
+
+        bestScore = score if score > bestScore
+
+        debug "findFilesMatchingSuffixInSubtree match: path = %j, score = %j", path, score
+
+        { path, score }
+
+    bestMatches = (match for match in allMatches when match.score is bestScore)
+
+    bestMatch = if bestMatches.length is 1 then bestMatches[0] else null
+
+    process.nextTick ->
+      callback null, { allMatches, bestMatches, bestMatch }
 
 
   _addError: (path, err) ->

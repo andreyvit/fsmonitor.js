@@ -25,6 +25,87 @@ describe "FSTree", ->
     done()
 
 
+  describe "#findFilesBySuffix('foo/bar/boz.txt')", ->
+
+    it "should return no matches when no boz.txt files exist", (done) ->
+      sfs = createTempFS()
+      sfs.putSync 'foo.txt', "42"
+      sfs.putSync 'zoo/boo.txt', "42"
+
+      await
+        tree = new FSTree(sfs.path)
+        tree.once 'complete', defer()
+
+      await tree.findFilesBySuffix('foo/bar/boz.txt', {}, defer(err, result))
+      deepEqual result.allMatches,  []
+      deepEqual result.bestMatches, []
+      deepEqual result.bestMatch,   null
+      done()
+
+    it "should return a single match when a single boz.txt file exists", (done) ->
+      sfs = createTempFS()
+      sfs.putSync 'foo.txt', "42"
+      sfs.putSync 'zoo/boz.txt', "42"
+
+      await
+        tree = new FSTree(sfs.path)
+        tree.once 'complete', defer()
+
+      await tree.findFilesBySuffix('foo/bar/boz.txt', {}, defer(err, result))
+      deepEqual result.allMatches,  [{ path: 'zoo/boz.txt', score: 1 }]
+      deepEqual result.bestMatches, [{ path: 'zoo/boz.txt', score: 1 }]
+      deepEqual result.bestMatch,    { path: 'zoo/boz.txt', score: 1 }
+      done()
+
+    it "should return two allMatches and one bestMatch when two inequal boz.txt files exist", (done) ->
+      sfs = createTempFS()
+      sfs.putSync 'foo.txt', "42"
+      sfs.putSync 'zoo/boz.txt', "42"
+      sfs.putSync 'bar/boz.txt', "42"
+
+      await
+        tree = new FSTree(sfs.path)
+        tree.once 'complete', defer()
+
+      await tree.findFilesBySuffix('foo/bar/boz.txt', {}, defer(err, result))
+      deepEqual result.allMatches,  [{ path: 'bar/boz.txt', score: 2 }, { path: 'zoo/boz.txt', score: 1 }]
+      deepEqual result.bestMatches, [{ path: 'bar/boz.txt', score: 2 }]
+      deepEqual result.bestMatch,    { path: 'bar/boz.txt', score: 2 }
+      done()
+
+    it "should return two allMatches, two bestMatches and no bestMatch when two equal boz.txt files exist", (done) ->
+      sfs = createTempFS()
+      sfs.putSync 'foo.txt', "42"
+      sfs.putSync 'zoo/bar/boz.txt', "42"
+      sfs.putSync 'bar/boz.txt', "42"
+
+      await
+        tree = new FSTree(sfs.path)
+        tree.once 'complete', defer()
+
+      await tree.findFilesBySuffix('foo/bar/boz.txt', {}, defer(err, result))
+      deepEqual result.allMatches,  [{ path: 'bar/boz.txt', score: 2 }, { path: 'zoo/bar/boz.txt', score: 2 }]
+      deepEqual result.bestMatches, [{ path: 'bar/boz.txt', score: 2 }, { path: 'zoo/bar/boz.txt', score: 2 }]
+      deepEqual result.bestMatch,   null
+      done()
+
+    it "should prefer matches from the bestSubtree", (done) ->
+      sfs = createTempFS()
+      sfs.putSync 'foo.txt', "42"
+      sfs.putSync 'zoo/bar/boz.txt', "42"
+      sfs.putSync 'bar/boz.txt', "42"
+
+      await
+        tree = new FSTree(sfs.path)
+        tree.once 'complete', defer()
+
+      await tree.findFilesBySuffix('foo/bar/boz.txt', { bestSubtree: 'zoo' }, defer(err, result))
+      deepEqual result.allMatches,  [{ path: 'bar/boz.txt', score: 2 }, { path: 'zoo/bar/boz.txt', score: 2.5 }]
+      deepEqual result.bestMatches, [{ path: 'zoo/bar/boz.txt', score: 2.5 }]
+      deepEqual result.bestMatch,    { path: 'zoo/bar/boz.txt', score: 2.5 }
+      done()
+
+
   describe '#update()', ->
 
     o = (initial, update, expectedChange, done) ->
