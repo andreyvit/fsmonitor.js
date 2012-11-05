@@ -140,13 +140,14 @@ class FSMonitorTool
 
   startMonitoring: ->
     watcher = fsmonitor.watch(@folder, @list, @handleChange.bind(@))
-    if @listFiles
-      watcher.on 'complete', =>
+    watcher.on 'complete', =>
+      if @listFiles
         for file in watcher.tree.allFiles
           process.stdout.write "#{file}\n"
         for folder in watcher.tree.allFolders
           process.stdout.write "#{folder}/\n"
         process.exit()
+      process.stderr.write "..."  unless @quiet
 
 
   handleChange: (change) ->
@@ -186,11 +187,13 @@ class FSMonitorTool
         else
           await @_invokeExternalCommand @command, defer()
 
+        process.stderr.write "\n..."  unless @quiet
+
         @_externalCommandRunning = no
         @_scheduleExternalCommandExecution()  # execute again if any more changes came in
 
   _invokeExternalCommand: (command, callback) ->
-    process.stderr.write "#{displayStringForShellArgs(command)}\n"
+    process.stderr.write "\r#{displayStringForShellArgs(command)}\n"  unless @quiet
     child = spawn(command[0], command.slice(1), stdio: 'inherit')
 
     child.on 'exit', callback
