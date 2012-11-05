@@ -11,7 +11,7 @@ Options:
   -d <folder>        Specify the folder to monitor (defaults to the current folder)
   -p                 Print changes to console (default if no command specified)
   -s                 Run the provided command once on start up
-  -l                 Display the full list of the monitored files
+  -l                 Display a full list of matched (monitored) files and folders, and quit
   -q                 Quiet mode (don't print the initial banner)
   -J <subst>         Replace <subst> in the executed command with the name of the modified file
                      (this also changes how multiple changes are handled; normally, the command
@@ -146,6 +146,9 @@ class FSMonitorTool
       watcher.on 'complete', =>
         for file in watcher.tree.allFiles
           process.stdout.write "#{file}\n"
+        for folder in watcher.tree.allFolders
+          process.stdout.write "#{folder}/\n"
+        process.exit()
 
 
   handleChange: (change) ->

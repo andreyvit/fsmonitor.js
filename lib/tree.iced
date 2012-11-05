@@ -83,7 +83,11 @@ class FSChange
 module.exports =
 class FSTree extends EventEmitter
 
-  constructor: (@root, filter) ->
+  constructor: (@root, @filter) ->
+    if @filter and not ((typeof @filter.matches is 'function') and (typeof @filter.excludes is 'function'))
+      throw new Error "Invalid filter provided to FSTree; must define .matches() and .excludes()"
+    @filter or= { matches: (-> yes), excludes: (-> no) }
+
     @_files   = []
     @_folders = []
     @_errors  = []
@@ -92,7 +96,7 @@ class FSTree extends EventEmitter
     @_updateRequested  = no
     @_updateInProgress = no
 
-    debug "Finished building FSTree with #{@_files.length} files at #{@root}"
+    debug "Finished building FSTree with #{@_files.length} files and #{@_folders.length} folders at #{@root}"
     @emit 'complete'
 
 
@@ -210,9 +214,11 @@ class FSTree extends EventEmitter
     @_errors.push { path, err }
 
   _addFile: (relpath, stats) ->
+    debug "file: #{relpath}"
     @_files.push new FSFile(relpath, stats)
 
   _addFolder: (relpath, stats) ->
+    debug "FOLD: #{relpath}"
     @_folders.push new FSFile(relpath, stats)
 
   _walk: (path, relpath, autocb) ->
@@ -220,8 +226,10 @@ class FSTree extends EventEmitter
     return @_addError(path, err) if err
 
     if stats.isFile()
-      @_addFile relpath, stats
+      if @filter.matches(relpath, no)
+        @_addFile relpath, stats
     else if stats.isDirectory()
+      return if @filter.excludes(relpath, yes)
       @_addFolder relpath, stats
 
       await fs.readdir path, defer(err, files)
