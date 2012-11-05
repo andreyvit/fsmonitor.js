@@ -11,7 +11,12 @@ Options:
   -d <folder>        Specify the folder to monitor (defaults to the current folder)
   -p                 Print changes to console (default if no command specified)
   -s                 Run the provided command once on start up
+  -l                 Display the full list of the monitored files
   -q                 Quiet mode (don't print the initial banner)
+  -J <subst>         Replace <subst> in the executed command with the name of the modified file
+                     (this also changes how multiple changes are handled; normally, the command
+                     is only invoked once per a batch of changes; when -J is specified, the command
+                     is invoked once per every modified file)
 
 Masks:
   +<mask>            Include only the files matching the given mask
@@ -48,6 +53,8 @@ class FSMonitorTool
     @print = no
     @quiet = no
     @prerun = no
+    @subst = null
+    @listFiles = no
 
     @_latestChangeForExternalCommand = null
     @_externalCommandRunning = no
@@ -75,15 +82,23 @@ class FSMonitorTool
             process.stderr.write " *** Unknown option: #{arg}.\n"
             process.exit(13)
       else if arg.match /^-./
+        if arg.match /^-[dJ]./
+          argv.unshift arg.substr(2)
+          arg = arg.substr(0, 2)
+
         switch arg
           when '-d'
             @folder = requiredValue()
+          when '-J'
+            @subst = requiredValue()
           when '-p'
             @print = yes
           when '-s'
             @prerun = yes
           when '-q'
             @quiet = yes
+          when '-l'
+            @listFiles = yes
           else
             process.stderr.write " *** Unknown option: #{arg}.\n"
             process.exit(13)
@@ -121,11 +136,16 @@ class FSMonitorTool
     process.stderr.write "Monitoring:  #{folderStr}\n"
     process.stderr.write "    filter:  #{@list}\n"
     process.stderr.write "    action:  #{action}\n"
+    process.stderr.write "     subst:  #{@subst}\n" if @subst
     process.stderr.write "\n"
 
 
   startMonitoring: ->
-    fsmonitor.watch(@folder, @list, @handleChange.bind(@))
+    watcher = fsmonitor.watch(@folder, @list, @handleChange.bind(@))
+    if @listFiles
+      watcher.on 'complete', =>
+        for file in watcher.tree.allFiles
+          process.stdout.write "#{file}\n"
 
 
   handleChange: (change) ->
@@ -143,7 +163,10 @@ class FSMonitorTool
 
 
   executeCommandForChange: (change) ->
-    @_latestChangeForExternalCommand = change
+    if @_latestChangeForExternalCommand
+      @_latestChangeForExternalCommand.append change
+    else
+      @_latestChangeForExternalCommand = change
     @_scheduleExternalCommandExecution()
 
   _scheduleExternalCommandExecution: ->
@@ -154,12 +177,22 @@ class FSMonitorTool
 
         @_externalCommandRunning = yes
 
-        process.stderr.write "#{displayStringForShellArgs(@command)}\n"
-        child = spawn(@command[0], @command.slice(1), stdio: 'inherit')
+        if @subst
+          files = change.addedFiles.concat(change.modifiedFiles)
+          for file in files
+            command = (arg.replace(@subst, file) for arg in @command)
+            await @_invokeExternalCommand command, defer()
+        else
+          await @_invokeExternalCommand @command, defer()
 
-        child.on 'exit', =>
-          @_externalCommandRunning = no
-          @_scheduleExternalCommandExecution()  # execute again if any more changes came in
+        @_externalCommandRunning = no
+        @_scheduleExternalCommandExecution()  # execute again if any more changes came in
+
+  _invokeExternalCommand: (command, callback) ->
+    process.stderr.write "#{displayStringForShellArgs(command)}\n"
+    child = spawn(command[0], command.slice(1), stdio: 'inherit')
+
+    child.on 'exit', callback
 
 
 exports.run = (argv) ->

@@ -6,6 +6,18 @@ Path  = require 'path'
 
 { PlaPath } = require './pathutil'
 
+prependUniques = (dest, source) ->
+  for item in source
+    if dest.indexOf(item) < 0
+      dest.unshift item
+  dest
+
+appendUniques = (dest, source) ->
+  for item in source
+    if dest.indexOf(item) < 0
+      dest.push item
+  dest
+
 
 class FSFile
   constructor: (@relpath, @stats) ->
@@ -32,6 +44,24 @@ class FSChange
 
   isEmpty: ->
     (@addedFiles.length + @modifiedFiles.length + @removedFiles.length + @addedFolders.length + @modifiedFolders.length + @removedFolders.length) == 0
+
+  prepend: (peer) ->
+    prependUniques @addedFiles,    peer.addedFiles
+    prependUniques @modifiedFiles, peer.modifiedFiles
+    prependUniques @removedFiles,  peer.removedFiles
+
+    prependUniques @addedFolders,    peer.addedFolders
+    prependUniques @modifiedFolders, peer.modifiedFolders
+    prependUniques @removedFolders,  peer.removedFolders
+
+  append: (peer) ->
+    appendUniques @addedFiles,    peer.addedFiles
+    appendUniques @modifiedFiles, peer.modifiedFiles
+    appendUniques @removedFiles,  peer.removedFiles
+
+    appendUniques @addedFolders,    peer.addedFolders
+    appendUniques @modifiedFolders, peer.modifiedFolders
+    appendUniques @removedFolders,  peer.removedFolders
 
   toString: ->
     [
