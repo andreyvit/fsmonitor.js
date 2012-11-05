@@ -11,7 +11,7 @@ Options:
   -d <folder>        Specify the folder to monitor (defaults to the current folder)
   -p                 Print changes to console (default if no command specified)
   -s                 Run the provided command once on start up
-  -l                 Display a full list of matched (monitored) files and folders, and quit
+  -l                 Display a full list of matched (monitored) files and folders
   -q                 Quiet mode (don't print the initial banner)
   -J <subst>         Replace <subst> in the executed command with the name of the modified file
                      (this also changes how multiple changes are handled; normally, the command
@@ -46,8 +46,9 @@ displayStringForShellArgs = (args) ->
 class FSMonitorTool
   constructor: ->
     @list = new RelPathList()
-    @included = []
-    @excluded = []
+    @list.include RelPathSpec.parse('**')
+    @list2 = new RelPathList()  # alternative list to use if explicit inclusion specs were indeed provided
+
     @folder = process.cwd()
     @command = []
     @print = no
@@ -104,24 +105,21 @@ class FSMonitorTool
             process.exit(13)
       else
         if arg.match /^!/
-          @excluded.push arg.slice(1)
+          spec = RelPathSpec.parseGitStyleSpec(arg.slice(1))
+          @list.exclude spec
+          @list2?.exclude spec
         else if arg.match /^[+]/
-          @included.push arg.slice(1)
+          spec = RelPathSpec.parseGitStyleSpec(arg.slice(1))
+          if @list2
+            @list = @list2
+            @list2 = null
+          @list.include spec
         else
           argv.unshift(arg)
           break
 
     @command = argv
     @print = yes  if @command.length is 0
-
-    if @included.length > 0
-      for mask in @included
-        @list.include RelPathSpec.parseGitStyleSpec(mask)
-    else
-      @list.include RelPathSpec.parse('**')
-
-    for mask in @excluded
-      @list.exclude RelPathSpec.parseGitStyleSpec(mask)
 
 
   printOptions: ->
