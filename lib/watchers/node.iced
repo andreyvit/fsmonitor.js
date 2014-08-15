@@ -13,7 +13,7 @@ class NodeWatcher extends EventEmitter
     @_broken = {}
 
   close: ->
-    for own relpath, watcher of @watchers
+    for own relpath, watcher of @_watchers
       watcher.close()
     @_watchers = null
 
