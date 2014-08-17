@@ -14,10 +14,12 @@
     "pathspec": "~0.9.2"
   },
   "devDependencies": {
+    "iced-coffee-script": "~1.7.1-f",
     "mocha": "~1.6.0",
     "scopedfs": "~0.1.0"
   },
   "scripts": {
+    "pretest": "./node_modules/.bin/iced -I inline -c lib/*.iced lib/watchers/*.iced test/*.iced",
     "test": "./node_modules/mocha/bin/mocha -R ${REPORTER-spec}"
   },
   "repository": {
