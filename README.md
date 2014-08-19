@@ -76,3 +76,14 @@ Usage:
     General options:
       --help             Display this message
       --version          Display fsmonitor version number
+
+
+## Unit test
+
+Install necessary modules:
+
+    npm install
+
+Start `npm test` to run the unit tests:
+
+    npm test
