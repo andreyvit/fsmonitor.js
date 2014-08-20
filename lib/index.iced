@@ -14,4 +14,4 @@ exports.watch = (root, filter, options, listener) ->
   return monitor
 
 
-exports.version = '0.2.3'
+exports.version = '0.2.4'
