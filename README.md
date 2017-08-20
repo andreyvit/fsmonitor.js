@@ -1,3 +1,5 @@
+# Unmaintained, please use [chokidar](https://github.com/paulmillr/chokidar) instead!
+
 # File-grained cross-platform FS monitoring for Node.js
 
 **Wait, wait, how's it different from `fs.watch`?** Unlike `fs.watch`, fsmonitor:
