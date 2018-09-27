@@ -1,5 +1,7 @@
 # Unmaintained, please use [chokidar](https://github.com/paulmillr/chokidar) instead!
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/andreyvit/fsmonitor.js.svg)](https://greenkeeper.io/)
+
 # File-grained cross-platform FS monitoring for Node.js
 
 **Wait, wait, how's it different from `fs.watch`?** Unlike `fs.watch`, fsmonitor:
